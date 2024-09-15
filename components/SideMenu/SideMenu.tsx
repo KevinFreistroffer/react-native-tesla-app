@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
 
 interface SideMenuProps {
   slideAnim: Animated.Value;
@@ -21,10 +22,16 @@ const SideMenu: React.FC<SideMenuProps> = ({ slideAnim, closeMenu }) => {
       <TouchableOpacity style={styles.closeButton} onPress={closeMenu}>
         <Ionicons name="close" size={24} color="white" />
       </TouchableOpacity>
-      <Text style={styles.menuItem}>Home</Text>
-      <Text style={styles.menuItem}>Profile</Text>
-      <Text style={styles.menuItem}>Settings</Text>
-      {/* Add more menu items as needed */}
+      <Link href="/" asChild>
+          <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+            <Text style={styles.menuItem}>Home</Text>
+          </TouchableOpacity>
+        </Link>
+        <Link href="/sign-in" asChild>
+          <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+            <Text style={styles.menuItem}>Sign In</Text>
+          </TouchableOpacity>
+        </Link>
     </Animated.View>
   );
 };

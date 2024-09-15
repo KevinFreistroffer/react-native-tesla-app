@@ -12,6 +12,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
+  Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { styles as getStyles } from "./styles";
@@ -19,6 +20,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons"; // Add this import
 import SideMenu from "@/components/SideMenu/SideMenu";
 import Header from "@/components/Header";
+import { Link, useNavigation } from "expo-router";
 
 interface ISavings {
   amount: number;
@@ -38,6 +40,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(-300)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
 
   const handleSubmit = async () => {
     const amount = parseFloat(inputAmount);
@@ -139,14 +142,11 @@ export default function App() {
                 <Ionicons name="menu" size={24} color="white" />
               </TouchableOpacity>
               <Text style={styles.headerTitle}>Savings Tracker</Text>
-              <TouchableOpacity
-                style={styles.headerRight}
-                onPress={() => {
-                  /* Handle sign in press */
-                }}
-              >
-                <Text style={styles.signInText}>Sign In</Text>
-              </TouchableOpacity>
+              <Link href="./sign-in" asChild style={styles.headerRight}>
+                <Pressable>
+                  <Text style={styles.signInText}>Sign In</Text>
+                </Pressable>
+              </Link>
             </View>
 
             <View style={styles.mainContentContainer}>
