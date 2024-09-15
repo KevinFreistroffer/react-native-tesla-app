@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,15 @@ import {
   ImageBackground,
   Dimensions,
   useWindowDimensions,
+  Animated,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { styles as getStyles } from "../styles";
 import { ScrollView } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons"; // Add this import
+import SideMenu from "@/components/SideMenu/SideMenu";
 
 interface ISavings {
   amount: number;
@@ -29,6 +34,9 @@ export default function Component() {
   const [wins, setWins] = useState<ISavings[]>([]);
   const windowDimensions = useWindowDimensions();
   const styles = getStyles(windowDimensions);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-300)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const handleSubmit = async () => {
     const amount = parseFloat(inputAmount);
@@ -90,90 +98,135 @@ export default function Component() {
     }
   }, [hasFetchedStorage]);
 
+  const toggleMenu = () => {
+    const toValue = menuOpen ? -300 : 0;
+    const fadeValue = menuOpen ? 0 : 0.5;
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: fadeValue,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    setMenuOpen(!menuOpen);
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <ImageBackground
-        source={{
-          uri: "https://images.unsplash.com/photo-1617704548623-340376564e68?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
-        }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay}>
-          <View style={styles.heading}>
-            <Text style={styles.title}>Tesla Savings Tracker</Text>
-            {/* <Text style={styles.subtitle}>
-              Goal: New Tesla - ${TESLA_PRICE.toLocaleString()}
-            </Text> */}
-          </View>
-
-          <View style={styles.mainContentContainer}>
-            <View style={styles.savingsContainer}>
-              {!hasFetchedStorage ? (
-                <ActivityIndicator size="large" color="#0000ff" />
-              ) : (
-                <>
-                  <Text style={styles.savingsText}>
-                    Goal: ${TESLA_PRICE.toLocaleString()}
-                  </Text>
-                  <Text style={styles.savingsText}>
-                    Current Savings: ${currentSavings.toLocaleString()}
-                  </Text>
-                  <View style={styles.progressBarContainer}>
-                    <View
-                      style={[styles.progressBar, { width: `${progress}%` }]}
-                    />
-                  </View>
-                  <Text style={styles.progressText}>
-                    {progress.toFixed(1)}% Complete
-                  </Text>
-                </>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={inputAmount}
-                onChangeText={setInputAmount}
-                placeholder="Enter amount spent"
-              />
-              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                <Text style={styles.buttonText}>Subtract</Text>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        console.log("pressed");
+      }}
+      accessible={false}
+    >
+      <ScrollView style={styles.container}>
+        <ImageBackground
+          source={{
+            uri: "https://images.unsplash.com/photo-1617704548623-340376564e68?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+          }}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <View style={styles.overlay}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.headerLeft} onPress={toggleMenu}>
+                <Ionicons name="menu" size={24} color="white" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Savings Tracker</Text>
+              <TouchableOpacity
+                style={styles.headerRight}
+                onPress={() => {
+                  /* Handle sign in press */
+                }}
+              >
+                <Text style={styles.signInText}>Sign In</Text>
               </TouchableOpacity>
             </View>
 
-            {wins.length > 0 && (
-              <ScrollView style={styles.winsContainer}>
-                <Text style={styles.winsTitle}>Wins</Text>
-                {wins.map((win, index) => (
-                  <View style={styles.winView} key={index}>
-                    <Text key={index} style={styles.winText}>
-                      Made ${win.amount.toLocaleString()}
+            <View style={styles.mainContentContainer}>
+              <View style={styles.savingsContainer}>
+                {!hasFetchedStorage ? (
+                  <ActivityIndicator size="large" color="#0000ff" />
+                ) : (
+                  <>
+                    <Text style={styles.savingsText}>
+                      Goal: ${TESLA_PRICE.toLocaleString()}
                     </Text>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
+                    <Text style={styles.savingsText}>
+                      Current Savings: ${currentSavings.toLocaleString()}
+                    </Text>
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[styles.progressBar, { width: `${progress}%` }]}
+                      />
+                    </View>
+                    <Text style={styles.progressText}>
+                      {progress.toFixed(1)}% Complete
+                    </Text>
+                  </>
+                )}
+              </View>
 
-            <TouchableOpacity
-              style={{ ...styles.button, ...styles.clearButton }}
-              onPress={async () => {
-                try {
-                  await AsyncStorage.clear();
-                  setWins([]);
-                  setCurrentSavings(TESLA_PRICE);
-                } catch (error) {
-                  console.log(error);
-                }
-              }}
-            >
-              <Text style={styles.buttonText}>Clear</Text>
-            </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={inputAmount}
+                  onChangeText={setInputAmount}
+                  placeholder="Enter amount spent"
+                />
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Subtract</Text>
+                </TouchableOpacity>
+              </View>
+
+              {wins.length > 0 && (
+                <ScrollView style={styles.winsContainer}>
+                  <Text style={styles.winsTitle}>Wins</Text>
+                  {wins.map((win, index) => (
+                    <View style={styles.winView} key={index}>
+                      <Text key={index} style={styles.winText}>
+                        Made ${win.amount.toLocaleString()}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+
+              <TouchableOpacity
+                style={{ ...styles.button, ...styles.clearButton }}
+                onPress={async () => {
+                  try {
+                    await AsyncStorage.clear();
+                    setWins([]);
+                    setCurrentSavings(TESLA_PRICE);
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Clear</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ImageBackground>
-    </ScrollView>
+        </ImageBackground>
+
+        {menuOpen && (
+          <Animated.View
+            style={[
+              styles.menuOverlay,
+              {
+                opacity: fadeAnim,
+              },
+            ]}
+          />
+        )}
+        <SideMenu slideAnim={slideAnim} closeMenu={() => toggleMenu()} />
+      </ScrollView>
+    </TouchableWithoutFeedback>
   );
 }

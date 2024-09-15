@@ -13,7 +13,7 @@ const boxShadow = {
   borderWidth: 1,
 };
 
-const red = "rgba(204, 0, 0, 1)";
+export const red: string = "rgba(204, 0, 0, 1)";
 
 export const styles = ({ width, height }: ScaledSize) => {
   return StyleSheet.create({
@@ -38,11 +38,35 @@ export const styles = ({ width, height }: ScaledSize) => {
       justifyContent: "flex-start",
       alignItems: "center",
     },
-    heading: {
+    menuOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "black" },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
       width: "100%",
-      padding: 10,
-      backgroundColor: "rgba(83, 83, 83, 0.75)",
+      padding: width < 768 ? width * 0.01 : 5,
+      backgroundColor: "rgba(42.5, 42.5, 42.5, 0.9)",
       marginBottom: 40,
+    },
+    headerLeft: {
+      flex: 1,
+      alignItems: "flex-start",
+    },
+    headerTitle: {
+      flex: 2,
+      textAlign: "center",
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "white",
+    },
+    headerRight: {
+      flex: 1,
+      alignItems: "flex-end",
+    },
+    signInText: {
+      color: "white",
+      fontSize: 16,
     },
     mainContentContainer: {
       width: "100%",
@@ -50,12 +74,11 @@ export const styles = ({ width, height }: ScaledSize) => {
       display: "flex",
     },
     title: {
-      fontSize: width < 768 ? width * 0.06 : 30,
-      fontVariant: ["small-caps"],
-      fontWeight: "100",
-      marginBottom: 10,
+      fontSize: width < 768 ? width * 0.055 : 30,
+      // fontVariant: ["small-caps"],
+      fontWeight: "500",
       textAlign: "center",
-      color: red,
+      color: "white",
     },
     subtitle: {
       fontSize: width < 768 && width > 300 ? width * 0.035 : 25,
