@@ -14,10 +14,11 @@ import {
   Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { styles as getStyles } from "../styles";
+import { styles as getStyles } from "./styles";
 import { ScrollView } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons"; // Add this import
 import SideMenu from "@/components/SideMenu/SideMenu";
+import Header from "@/components/Header";
 
 interface ISavings {
   amount: number;
@@ -27,7 +28,7 @@ interface ISavings {
 const TESLA_PRICE = 25000;
 const STORAGE_KEY = "tesla_purchases";
 
-export default function Component() {
+export default function App() {
   const [currentSavings, setCurrentSavings] = useState(TESLA_PRICE);
   const [inputAmount, setInputAmount] = useState("");
   const [hasFetchedStorage, setHasFetchedStorage] = useState(false);
@@ -123,6 +124,7 @@ export default function Component() {
       }}
       accessible={false}
     >
+      {/* <Header toggleMenu={toggleMenu} /> */}
       <ScrollView style={styles.container}>
         <ImageBackground
           source={{
