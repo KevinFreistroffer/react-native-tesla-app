@@ -1,70 +1,179 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  ImageBackground,
+  Dimensions,
+  useWindowDimensions,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { styles as getStyles } from "../styles";
+import { ScrollView } from "react-native-gesture-handler";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+interface ISavings {
+  amount: number;
+  date: string;
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+const TESLA_PRICE = 25000;
+const STORAGE_KEY = "tesla_purchases";
+
+export default function Component() {
+  const [currentSavings, setCurrentSavings] = useState(TESLA_PRICE);
+  const [inputAmount, setInputAmount] = useState("");
+  const [hasFetchedStorage, setHasFetchedStorage] = useState(false);
+  const [wins, setWins] = useState<ISavings[]>([]);
+  const windowDimensions = useWindowDimensions();
+  const styles = getStyles(windowDimensions);
+
+  const handleSubmit = async () => {
+    const amount = parseFloat(inputAmount);
+    if (!isNaN(amount) && amount > 0) {
+      wins.push({ amount, date: new Date().toISOString() });
+      setCurrentSavings((prev) => Math.max(0, prev - amount));
+      setInputAmount("");
+      await storeData({ amount, date: new Date().toISOString() });
+    }
+  };
+
+  const progress = ((TESLA_PRICE - currentSavings) / TESLA_PRICE) * 100;
+
+  const storeData = async (value: ISavings) => {
+    console.log(value);
+    try {
+      const stored = await getData();
+      console.log("stored", stored);
+      if (stored) {
+        const jsonValue = JSON.stringify([...stored, value]);
+        await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+      } else {
+        const jsonValue = JSON.stringify([value]);
+        await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+      }
+    } catch (e) {
+      // saving error
+      console.log(e);
+    }
+  };
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      // error reading value
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    if (!hasFetchedStorage) {
+      const fetchData = async () => {
+        const storedData = await getData();
+        if (storedData) {
+          const totalAmount = storedData.reduce(
+            (accumulator: number, item: ISavings) => accumulator + item.amount,
+            0
+          );
+          setCurrentSavings(TESLA_PRICE - totalAmount);
+
+          setWins(storedData);
+        }
+      };
+
+      fetchData();
+      setHasFetchedStorage(true);
+    }
+  }, [hasFetchedStorage]);
+
+  return (
+    <ScrollView style={styles.container}>
+      <ImageBackground
+        source={{
+          uri: "https://images.unsplash.com/photo-1617704548623-340376564e68?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+        }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <View style={styles.heading}>
+            <Text style={styles.title}>Tesla Savings Tracker</Text>
+            {/* <Text style={styles.subtitle}>
+              Goal: New Tesla - ${TESLA_PRICE.toLocaleString()}
+            </Text> */}
+          </View>
+
+          <View style={styles.mainContentContainer}>
+            <View style={styles.savingsContainer}>
+              {!hasFetchedStorage ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+              ) : (
+                <>
+                  <Text style={styles.savingsText}>
+                    Goal: ${TESLA_PRICE.toLocaleString()}
+                  </Text>
+                  <Text style={styles.savingsText}>
+                    Current Savings: ${currentSavings.toLocaleString()}
+                  </Text>
+                  <View style={styles.progressBarContainer}>
+                    <View
+                      style={[styles.progressBar, { width: `${progress}%` }]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {progress.toFixed(1)}% Complete
+                  </Text>
+                </>
+              )}
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={inputAmount}
+                onChangeText={setInputAmount}
+                placeholder="Enter amount spent"
+              />
+              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                <Text style={styles.buttonText}>Subtract</Text>
+              </TouchableOpacity>
+            </View>
+
+            {wins.length > 0 && (
+              <ScrollView style={styles.winsContainer}>
+                <Text style={styles.winsTitle}>Wins</Text>
+                {wins.map((win, index) => (
+                  <View style={styles.winView} key={index}>
+                    <Text key={index} style={styles.winText}>
+                      Made ${win.amount.toLocaleString()}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            <TouchableOpacity
+              style={{ ...styles.button, ...styles.clearButton }}
+              onPress={async () => {
+                try {
+                  await AsyncStorage.clear();
+                  setWins([]);
+                  setCurrentSavings(TESLA_PRICE);
+                } catch (error) {
+                  console.log(error);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ImageBackground>
+    </ScrollView>
+  );
+}
